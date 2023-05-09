@@ -1,0 +1,74 @@
+- name: Assert input parameter
+  ansible.builtin.assert:
+    that:
+      - service is defined
+
+
+
+- name: Get consul KV infos of service
+  ansible.builtin.include_tasks: helper/consul_kv/get_kv_of_service.yml
+  vars:
+    service_id: "{{ service.ServiceID }}"
+
+- name: Get Connection Type of non-remote service
+  ansible.builtin.set_fact:
+    nonRemoteConnectionType: "{{ [service.ServiceMeta.connectionType] }}"
+  when: service.ServiceMeta.connectionType != 'null'
+
+- name: Get Access via Capability Service
+  when: supported_connection_types_without_remote | length > 0
+  block:
+    - name: Set Variables for add_host task
+      ansible.builtin.set_fact:
+        ansible_inventory:
+          # GENERAL
+          name: "{{ service.Address }}"
+          groups: "{{ service.ServiceTags + (nonRemoteConnectionType | default([]) ) }}"
+          ansible_connection: "local"
+          ansible_port: "{{ service.ServicePort | default('', true) | int }}"
+          ansible_shell_type: ""
+          ansible_python_interpreter: '/usr/bin/python3'
+          ansible_user: "{{ username | default('') }}"
+          ansible_password: "{{ password | default('') }}"
+          # BECOME
+          ansible_become_user: ""
+          ansible_become_pass: ""
+          ansible_become_method: ""
+          # SSH
+          ansible_ssh_user: ""
+          ansible_ssh_password: ""
+          ansible_ssh_port: "{{ '' | int }}"
+          ansible_ssh_common_args: ''
+          ansible_ssh_retries: 1
+          # WinRM
+          ansible_winrm_port: "{{ '' | int }}"
+          ansible_winrm_transport: ""
+          ansible_winrm_connection_timeout_sec: 0
+          ansible_winrm_operation_timeout_sec: 0
+          ansible_winrm_read_timeout_sec: 0
+          ansible_winrm_server_cert_validation: ignore
+          # PSRP
+          ansible_psrp_port: "{{ '' | int }}"
+          ansible_psrp_connection_timeout: 0
+          ansible_psrp_operation_timeout: 0
+          ansible_psrp_read_timeout: 0
+          ansible_psrp_reconnection_retries: 1
+          ansible_psrp_cert_validation: ignore
+
+#    - name: Set Variables for add_host task
+#      ansible.builtin.set_fact:
+#        ansible_inventory:
+#           name: "{{ service.Address }}"
+#           groups: "{{ service.ServiceTags + (nonRemoteConnectionType | default([]) ) }}"
+#           ansible_connection: "local"
+#           ansible_user: ""
+#           ansible_password: ""
+#           ansible_ssh_user: ""
+#           ansible_ssh_pass: ""
+#           ansible_port: "{{ service.ServicePort | default(0, true) }}"
+#           ansible_become_user: ""
+#           ansible_become_pass: ""
+#           ansible_become_method: ""
+#           ansible_winrm_transport: ""
+#           ansible_python_interpreter: "/usr/bin/python3"
+#           ansible_ssh_common_args: '-o StrictHostKeyChecking\=no'

@@ -1,0 +1,10 @@
+- name: Get Key
+  ansible.builtin.set_fact:
+    key: "{{ item.Key | split('/') | last }}"
+
+- name: Get Value
+  ansible.builtin.set_fact:
+    value: "{{ item.Value | b64decode | from_json }}"
+
+- ansible.builtin.set_fact:
+    service_kv: "{{ service_kv | default({}) | combine({ key: value }) }}"

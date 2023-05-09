@@ -1,0 +1,17 @@
+---
+- name: Get Vault Token
+  ansible.builtin.uri:
+    url: "{{ vault_url }}/v1/auth/jwt/login"
+    method: POST
+    status_code: 200, 404
+    validate_certs: no
+    body_format: json
+    body:
+      role: default
+      jwt: "{{ keycloak_token }}"
+  register: output_vault_login
+  no_log: true
+
+- ansible.builtin.set_fact:
+    vault_token: "{{ output_vault_login.json.auth.client_token }}"
+  no_log: true

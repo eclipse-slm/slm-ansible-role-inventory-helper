@@ -1,0 +1,19 @@
+- name: Assert input parameters
+  ansible.builtin.assert:
+    that: (service_id is defined) and (service_id | length > 0)
+
+- name: Get KV entry of connection Service
+  ansible.builtin.uri:
+    url: "{{ consul_url }}/v1/kv/{{ service_id }}?recurse=true"
+    method: GET
+    status_code: 200, 404
+    validate_certs: no
+    headers:
+      Authorization: "Bearer {{ consul_token }}"
+  register: output_kv_of_connection_service
+  no_log: false
+
+- name: Extract Key/Value infos
+  ansible.builtin.include_tasks: extract_consul_kv.yml
+  loop: "{{ output_kv_of_connection_service.json }}"
+  when: output_kv_of_connection_service.json is defined

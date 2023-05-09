@@ -1,0 +1,145 @@
+- name: Assert input parameter
+  ansible.builtin.assert:
+    that:
+      - service is defined
+
+- name: Get consul KV infos of connection type
+  ansible.builtin.include_tasks: helper/consul_kv/get_kv_of_service.yml
+  vars:
+    service_id: "{{ service.ServiceID }}"
+
+- name: Set KV Path for vault call (CredentialUsernamePassword)
+  ansible.builtin.set_fact:
+    kv_path: "resources/data/{{ service.ServiceID }}/CredentialUsernamePassword"
+  when:
+    - service_kv.credentialClasses is defined
+    - "'CredentialUsernamePassword' in service_kv.credentialClasses"
+
+- name: Set KV Path for vault call (Default)
+  ansible.builtin.set_fact:
+    kv_path: "resources/data/{{ remote_access_service.ServiceID }}/CredentialUsernamePassword"
+  when:
+    - not service_kv.credentialClasses is defined
+
+- name: Get Credentials of connection service
+  ansible.builtin.set_fact:
+    username: "{{ lookup('hashi_vault', '{{ vault_lookup_base_info }} secret={{ kv_path }}:username') }}"
+    password: "{{ lookup('hashi_vault', '{{ vault_lookup_base_info }} secret={{ kv_path }}:password') }}"
+    connection_type: "{{ service.ServiceMeta.connectionType }}"
+
+- debug:
+    var: connection_type
+
+- name: Set Variables for add_host task (ssh)
+  when: connection_type | lower == "ssh"
+  ansible.builtin.set_fact:
+    ansible_inventory:
+      # GENERAL
+      name: "{{ service.Address }}"
+      groups: "{{ (ansible_inventory.groups | default([])) + service.ServiceTags + [connection_type] }}"
+      ansible_connection: "ssh"
+      ansible_port: "{{ service.ServicePort | default(0, true) }}"
+      ansible_shell_type: "sh"
+      ansible_python_interpreter: '/usr/bin/python3'
+      ansible_user: "{{ username }}"
+      ansible_password: "{{ password }}"
+      # BECOME
+      ansible_become_user: ""
+      ansible_become_pass: "{{ password }}"
+      ansible_become_method: "sudo"
+      # SSH
+      ansible_ssh_user: "{{ username }}"
+      ansible_ssh_password: "{{ password }}"
+      ansible_ssh_port: "{{ service.ServicePort | default(0, true) }}"
+      ansible_ssh_common_args: '-o StrictHostKeyChecking\=no -o ServerAliveInterval=10'
+      ansible_ssh_retries: 10
+      # WinRM
+      ansible_winrm_port: "{{ service.ServicePort | default(0, true) }}"
+      ansible_winrm_transport: "credssp"
+      ansible_winrm_connection_timeout_sec: 30
+      ansible_winrm_operation_timeout_sec: 120
+      ansible_winrm_read_timeout_sec: 360
+      ansible_winrm_server_cert_validation: ignore
+      # PSRP
+      ansible_psrp_port: "{{ service.ServicePort | default(0, true) }}"
+      ansible_psrp_connection_timeout: 30
+      ansible_psrp_operation_timeout: 120
+      ansible_psrp_read_timeout: 360
+      ansible_psrp_reconnection_retries: 10
+      ansible_psrp_cert_validation: ignore
+
+- name: Set Variables for add_host task (WinRM)
+  when: (connection_type | lower) == "winrm"
+  ansible.builtin.set_fact:
+    ansible_inventory:
+      # GENERAL
+      name: "{{ service.Address }}"
+      groups: "{{ (ansible_inventory.groups | default([])) + service.ServiceTags + [connection_type] }}"
+      ansible_connection: "psrp"
+      ansible_port: "{{ service.ServicePort | default(0, true) }}"
+      ansible_shell_type: ""
+      ansible_python_interpreter: '/usr/bin/python3'
+      ansible_user: "{{ username }}"
+      ansible_password: "{{ password }}"
+      # BECOME
+      ansible_become_user: "{{ username }}"
+      ansible_become_pass: "{{ password }}"
+      ansible_become_method: "runas"
+      # SSH
+      ansible_ssh_user: "{{ username }}"
+      ansible_ssh_password: "{{ password }}"
+      ansible_ssh_port: "{{ service.ServicePort | default(0, true) }}"
+      ansible_ssh_common_args: '-o StrictHostKeyChecking\=no -o ServerAliveInterval=10'
+      ansible_ssh_retries: 10
+      # WinRM
+      ansible_winrm_port: "{{ service.ServicePort | default(0, true) }}"
+      ansible_winrm_transport: "credssp"
+      ansible_winrm_connection_timeout_sec: 30
+      ansible_winrm_operation_timeout_sec: 120
+      ansible_winrm_read_timeout_sec: 360
+      ansible_winrm_server_cert_validation: ignore
+      # PSRP
+      ansible_psrp_port: "{{ service.ServicePort | default(0, true) }}"
+      ansible_psrp_connection_timeout: 30
+      ansible_psrp_operation_timeout: 120
+      ansible_psrp_read_timeout: 360
+      ansible_psrp_reconnection_retries: 10
+      ansible_psrp_cert_validation: ignore
+
+- name: Set Variables for add_host task (winssh)
+  when: (connection_type | lower) == "winssh"
+  ansible.builtin.set_fact:
+    ansible_inventory:
+      # GENERAL
+      name: "{{ service.Address }}"
+      groups: "{{ (ansible_inventory.groups | default([])) + service.ServiceTags + [connection_type] }}"
+      ansible_connection: "ssh"
+      ansible_port: "{{ service.ServicePort | default(0, true) }}"
+      ansible_shell_type: "cmd"
+      ansible_python_interpreter: '/usr/bin/python3'
+      ansible_user: "{{ username }}"
+      ansible_password: "{{ password }}"
+      # BECOME
+      ansible_become_user: "{{ username }}"
+      ansible_become_pass: "{{ password }}"
+      ansible_become_method: "runas"
+      # SSH
+      ansible_ssh_user: "{{ username }}"
+      ansible_ssh_password: "{{ password }}"
+      ansible_ssh_port: "{{ service.ServicePort | default(0, true) }}"
+      ansible_ssh_common_args: '-o StrictHostKeyChecking\=no -o ServerAliveInterval=10'
+      ansible_ssh_retries: 10
+      # WinRM
+      ansible_winrm_port: "{{ service.ServicePort | default(0, true) }}"
+      ansible_winrm_transport: "credssp"
+      ansible_winrm_connection_timeout_sec: 30
+      ansible_winrm_operation_timeout_sec: 120
+      ansible_winrm_read_timeout_sec: 360
+      ansible_winrm_server_cert_validation: ignore
+      # PSRP
+      ansible_psrp_port: "{{ service.ServicePort | default(0, true) }}"
+      ansible_psrp_connection_timeout: 30
+      ansible_psrp_operation_timeout: 120
+      ansible_psrp_read_timeout: 360
+      ansible_psrp_reconnection_retries: 10
+      ansible_psrp_cert_validation: ignore

@@ -1,0 +1,17 @@
+---
+- name: Get Consul Token
+  ansible.builtin.uri:
+    url: "{{ consul_url }}/v1/acl/login"
+    method: POST
+    status_code: 200, 404
+    validate_certs: no
+    body_format: json
+    body:
+      AuthMethod: keycloak
+      BearerToken: "{{ keycloak_token }}"
+  register: output_consul_login
+  no_log: true
+
+- ansible.builtin.set_fact:
+    consul_token: "{{ output_consul_login.json.SecretID }}"
+  no_log: true

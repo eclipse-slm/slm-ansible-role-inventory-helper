@@ -1,0 +1,15 @@
+---
+- name: Set connection type
+  ansible.builtin.set_fact:
+    connection_type: "{{ supported_connection_types_without_remote | first }}"
+
+- name: Add Non-Remote Connection to ansible Inventory
+  ansible.builtin.add_host:
+    name: "{{ connection_service.Address }}"
+    groups: "{{ ['target_host', connection_type] + connection_service.ServiceTags }}"
+    ansible_connection: "local"
+    ansible_port: "{{connection_service.ServicePort | default('')}}"
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+  vars:
+    connection_type: "{{ supported_connection_types_without_remote | first }}"
