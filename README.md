@@ -1,1 +1,1 @@
-# slm-ansible-role-inventory-helper test
+# slm-ansible-role-inventory-helper
