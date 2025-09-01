@@ -9,7 +9,6 @@ services:
     environment:
       CONSUL_URL: http://slm.local:8500
       VAULT_URL: http://slm.local:8200
-      RESOURCE_ID: b038d1e3-3998-4de4-b6c7-569c98eda2e2
       SERVICE_NAME: docker_25027772-60c3-4bf8-916e-3ba1dc586f75
       SUPPORTED_CONNECTION_TYPES: "[ 'WinSsh', 'ssh' ]"
       KEYCLOAK_TOKEN:
