@@ -10,7 +10,7 @@
 
 - name: Set Filter Expression
   ansible.builtin.set_fact:
-    filter_exp: "\"RemoteAccessService\" in Tags"
+    filter_exp: "\"RemoteAccessConsulService\" in Tags"
 
 - name: Get Remote Access Connection Service of node with id = '{{ service.ID }}'
   ansible.builtin.uri:
@@ -55,14 +55,14 @@
 
     - name: Set KV Path for vault call (CredentialUsernamePassword)
       ansible.builtin.set_fact:
-        kv_path: "resources/data/{{ remote_access_service.ServiceID }}/CredentialUsernamePassword"
+        kv_path: "resources/data/{{ resource_id }}/remoteAccess/{{ remote_access_service.ServiceID }}/CredentialUsernamePassword"
       when:
         - service_kv.credentialClasses is defined
         - "'CredentialUsernamePassword' in service_kv.credentialClasses"
 
     - name: Set KV Path for vault call (Default)
       ansible.builtin.set_fact:
-        kv_path: "resources/data/{{ remote_access_service.ServiceID }}/CredentialUsernamePassword"
+        kv_path: "resources/data/{{ resource_id }}/remoteAccess/{{ remote_access_service.ServiceID }}/CredentialUsernamePassword"
       when:
         - not service_kv.credentialClasses is defined
 
