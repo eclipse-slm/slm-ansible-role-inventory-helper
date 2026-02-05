@@ -1,28 +1,17 @@
-#- name: Init Variables for add_host task
-#  ansible.builtin.set_fact:
-#    ansible_inventory:
-#       name: ''
-#       groups: []
-#       ansible_connection: ''
-#       ansible_ssh_user: ''
-#       ansible_ssh_pass: ''
-#       ansible_port: ''
-#       ansible_become_pass: ''
-#       ansible_python_interpreter: '/usr/bin/python3'
-#       ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
-
-- name: Extract connection service object from api return
-  ansible.builtin.set_fact:
+- ansible.builtin.set_fact:
     service: "{{ item }}"
 
-- name: Process Remote Access Service
+- debug:
+    msg: "Processing service {{ service.ServiceName }}"
+
+- name: "Process Remote Access Service"
   ansible.builtin.include_tasks: actions/process_remote_access_service.yml
   when:
     -  supported_connection_types_only_remote | length > 0
-    - '"RemoteAccessService" in service.ServiceTags'
+    - '"Process Remote Access Service" in service.ServiceTags'
 
 - name: Process None-Remote Access Service
-  when: 'not "RemoteAccessService" in service.ServiceTags'
+  when: 'not "Process Remote Access Service" in service.ServiceTags'
   block:
     - name: Process None-Remote Access Service
       when:

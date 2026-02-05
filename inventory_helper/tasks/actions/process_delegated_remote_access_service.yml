@@ -53,24 +53,30 @@
       vars:
         service_id: "{{ remote_access_service.ServiceID }}"
 
-    - name: Set KV Path for vault call (CredentialUsernamePassword)
-      ansible.builtin.set_fact:
-        kv_path: "resources/data/{{ resource_id }}/remoteAccess/{{ remote_access_service.ServiceID }}/CredentialUsernamePassword"
-      when:
-        - service_kv.credentialClasses is defined
-        - "'CredentialUsernamePassword' in service_kv.credentialClasses"
+    - set_fact:
+        credentialId: "{{ remote_access_service.ServiceMeta.credentialId }}"
+        connection_type: "{{ remote_access_service.ServiceMeta.connectionType }}"
 
     - name: Set KV Path for vault call (Default)
       ansible.builtin.set_fact:
-        kv_path: "resources/data/{{ resource_id }}/remoteAccess/{{ remote_access_service.ServiceID }}/CredentialUsernamePassword"
-      when:
-        - not service_kv.credentialClasses is defined
+        vault_kv_path: "credentials/data/{{ credentialId }}"
 
-    - name: Get Credentials of connection service
+    - name: Get Credentials linked to remote access service
       ansible.builtin.set_fact:
-        username: "{{ lookup('hashi_vault', '{{ vault_lookup_base_info }} secret={{ kv_path }}:username') }}"
-        password: "{{ lookup('hashi_vault', '{{ vault_lookup_base_info }} secret={{ kv_path }}:password') }}"
-        connection_type: "{{ remote_access_service.ServiceMeta.connectionType }}"
+        vault_secret: "{{ lookup('hashi_vault', '{{ vault_lookup_base_info }} secret={{ vault_kv_path }}', as='raw') }}"
+
+    - set_fact:
+        credentialDataType: "{{ vault_secret.data.metadata.custom_metadata.credentialDataType }}"
+
+    - set_fact:
+        username: "{{ vault_secret.data.data.username }}"
+        password: "{{ vault_secret.data.data.password }}"
+      when: credentialDataType == "USERNAME_PASSWORD"
+
+    - set_fact:
+        privateKey: "{{ vault_secret.data.data.privateKey }}"
+        publicKey: "{{ vault_secret.data.data.publicKey }}"
+      when: credentialDataType == "KEY_PAIR"
 
     - name: Set Variables for add_host task (ssh)
       when: (connection_type | lower) == "ssh"
