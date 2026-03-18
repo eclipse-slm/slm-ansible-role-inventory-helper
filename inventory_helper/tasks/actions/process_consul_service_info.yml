@@ -40,14 +40,15 @@
     ansible_shell_type:         "{{ ansible_inventory.ansible_shell_type }}"
     ansible_python_interpreter: "{{ ansible_inventory.ansible_python_interpreter }}"
     ansible_user:               "{{ ansible_inventory.ansible_user }}"
-    ansible_password:           "{{ ansible_inventory.ansible_password }}"
+    ansible_password:           "{{ ansible_inventory.ansible_password | default(omit) }}"
     # BECOME
     ansible_become_user:    "{{ ansible_inventory.ansible_become_user }}"
-    ansible_become_pass:    "{{ ansible_inventory.ansible_become_pass }}"
+    ansible_become_pass:    "{{ ansible_inventory.ansible_become_pass | default(omit) }}"
     ansible_become_method:  "{{ ansible_inventory.ansible_become_method }}"
     # SSH
     ansible_ssh_user:         "{{ ansible_inventory.ansible_ssh_user }}"
-    ansible_ssh_password:     "{{ ansible_inventory.ansible_ssh_password }}"
+    ansible_ssh_password:     "{{ ansible_inventory.ansible_ssh_password | default(omit) }}"
+    ansible_ssh_private_key:  "{{ ansible_inventory.ansible_ssh_private_key | default(omit) }}"
     ansible_ssh_port:         "{{ ansible_inventory.ansible_ssh_port }}"
     ansible_ssh_common_args:  "{{ ansible_inventory.ansible_ssh_common_args }}"
     ansible_ssh_retries:      "{{ ansible_inventory.ansible_ssh_retries }}"

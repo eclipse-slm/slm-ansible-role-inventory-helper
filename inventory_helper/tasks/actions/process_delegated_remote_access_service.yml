@@ -74,6 +74,7 @@
       when: credentialDataType == "USERNAME_PASSWORD"
 
     - set_fact:
+        username: "{{ remote_access_service.ServiceMeta.username }}"
         privateKey: "{{ vault_secret.data.data.privateKey }}"
         publicKey: "{{ vault_secret.data.data.publicKey }}"
       when: credentialDataType == "KEY_PAIR"
@@ -90,14 +91,15 @@
           ansible_shell_type: "sh"
           ansible_python_interpreter: '/usr/bin/python3'
           ansible_user: "{{ username }}"
-          ansible_password: "{{ password }}"
+          ansible_password: "{{ password | default(omit) }}"
           # BECOME
           ansible_become_user: ""
-          ansible_become_pass: "{{ password }}"
+          ansible_become_pass: "{{ password | default(omit) }}"
           ansible_become_method: "sudo"
           # SSH
           ansible_ssh_user: "{{ username }}"
-          ansible_ssh_password: "{{ password }}"
+          ansible_ssh_password: "{{ password | default(omit) }}"
+          ansible_ssh_private_key:  "{{ privateKey | default(omit) }}"
           ansible_ssh_port: "{{ remote_access_service.ServicePort | default(0, true) }}"
           ansible_ssh_common_args: '-o StrictHostKeyChecking\=no -o ServerAliveInterval=10'
           ansible_ssh_retries: 10
@@ -128,14 +130,14 @@
           ansible_shell_type: ""
           ansible_python_interpreter: '/usr/bin/python3'
           ansible_user: "{{ username }}"
-          ansible_password: "{{ password }}"
+          ansible_password: "{{ password | default(omit) }}"
           # BECOME
           ansible_become_user: "{{ username }}"
-          ansible_become_pass: "{{ password }}"
+          ansible_become_pass: "{{ password | default(omit)  }}"
           ansible_become_method: "runas"
           # SSH
           ansible_ssh_user: "{{ username }}"
-          ansible_ssh_password: "{{ password }}"
+          ansible_ssh_password: "{{ password | default(omit)  }}"
           ansible_ssh_port: "{{ remote_access_service.ServicePort | default(0, true) }}"
           ansible_ssh_common_args: '-o StrictHostKeyChecking\=no -o ServerAliveInterval=10'
           ansible_ssh_retries: 10
@@ -166,14 +168,14 @@
           ansible_shell_type: "cmd"
           ansible_python_interpreter: '/usr/bin/python3'
           ansible_user: "{{ username }}"
-          ansible_password: "{{ password }}"
+          ansible_password: "{{ password | default(omit)  }}"
           # BECOME
           ansible_become_user: "{{ username }}"
-          ansible_become_pass: "{{ password }}"
+          ansible_become_pass: "{{ password | default(omit)  }}"
           ansible_become_method: "runas"
           # SSH
           ansible_ssh_user: "{{ username }}"
-          ansible_ssh_password: "{{ password }}"
+          ansible_ssh_password: "{{ password | default(omit)  }}"
           ansible_ssh_port: "{{ remote_access_service.ServicePort | default(0, true) }}"
           ansible_ssh_common_args: '-o StrictHostKeyChecking\=no -o ServerAliveInterval=10'
           ansible_ssh_retries: 10
