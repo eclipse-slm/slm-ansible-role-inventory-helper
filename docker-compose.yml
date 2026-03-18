@@ -5,7 +5,7 @@
 services:
   dev-container:
     build: .
-    image: ghcr.io/eclipse-slm/ansible:2.17.2
+    image: ghcr.io/eclipse-slm/ansible:2.20.3
     environment:
       CONSUL_URL: http://slm.local:8500
       VAULT_URL: http://slm.local:8200
