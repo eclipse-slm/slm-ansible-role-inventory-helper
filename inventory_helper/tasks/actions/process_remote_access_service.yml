@@ -40,6 +40,7 @@
     privateKey: "{{ vault_secret.data.data.privateKey }}"
     publicKey: "{{ vault_secret.data.data.publicKey }}"
   when: credentialDataType == "KEY_PAIR"
+  # When auth via private key is used, ANSIBLE_SSH_AGENT=auto must be set and Ansible Core Version >= 2.19 is required
 
 - name: Set Variables for add_host task (ssh)
   when: connection_type | lower == "ssh"
