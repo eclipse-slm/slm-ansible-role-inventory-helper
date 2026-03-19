@@ -34,12 +34,14 @@
     username: "{{ vault_secret.data.data.username }}"
     password: "{{ vault_secret.data.data.password }}"
   when: credentialDataType == "USERNAME_PASSWORD"
+  no_log: true
 
 - set_fact:
     username: "{{ remote_access_service.ServiceMeta.username}}"
     privateKey: "{{ vault_secret.data.data.privateKey }}"
     publicKey: "{{ vault_secret.data.data.publicKey }}"
   when: credentialDataType == "KEY_PAIR"
+  no_log: true
   # When auth via private key is used, ANSIBLE_SSH_AGENT=auto must be set and Ansible Core Version >= 2.19 is required
 
 - name: Set Variables for add_host task (ssh)
@@ -80,6 +82,7 @@
       ansible_psrp_read_timeout: 360
       ansible_psrp_reconnection_retries: 10
       ansible_psrp_cert_validation: ignore
+  no_log: true
 
 - name: Set Variables for add_host task (WinRM)
   when: (connection_type | lower) == "winrm"
@@ -118,6 +121,7 @@
       ansible_psrp_read_timeout: 360
       ansible_psrp_reconnection_retries: 10
       ansible_psrp_cert_validation: ignore
+  no_log: true
 
 - name: Set Variables for add_host task (winssh)
   when: (connection_type | lower) == "winssh"
@@ -156,3 +160,4 @@
       ansible_psrp_read_timeout: 360
       ansible_psrp_reconnection_retries: 10
       ansible_psrp_cert_validation: ignore
+  no_log: true

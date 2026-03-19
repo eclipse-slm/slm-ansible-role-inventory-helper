@@ -70,3 +70,4 @@
     consul_service_meta:    "{{ consul_service_meta }}"
     vault_service_secrets:  "{{ vault_service_secrets }}"
   when: ansible_inventory.name is defined
+  no_log: true

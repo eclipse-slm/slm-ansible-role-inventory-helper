@@ -83,9 +83,6 @@
   - name: "Show all inventory groups"
     debug:
       var: groups
-  - name: "Show all hostvars"
-    debug:
-      var: hostvars
   - name: "Clear variable 'ansible_inventory', to prevent variable propagation"
     ansible.builtin.set_fact:
       ansible_inventory: {}

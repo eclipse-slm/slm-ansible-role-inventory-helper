@@ -3,8 +3,6 @@
     that:
       - service is defined
 
-
-
 - name: Get consul KV infos of service
   ansible.builtin.include_tasks: helper/consul_kv/get_kv_of_service.yml
   vars:
@@ -54,6 +52,7 @@
           ansible_psrp_read_timeout: 0
           ansible_psrp_reconnection_retries: 1
           ansible_psrp_cert_validation: ignore
+      no_log: true
 
 #    - name: Set Variables for add_host task
 #      ansible.builtin.set_fact:
