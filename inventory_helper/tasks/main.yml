@@ -1,6 +1,6 @@
 ---
 - name: "Get config from environment variables"
-  set_fact:
+  ansible.builtin.set_fact:
     consul_url: "{{ lookup('env', 'CONSUL_URL') }}"
     vault_url: "{{ lookup('env', 'VAULT_URL') }}"
 
@@ -20,16 +20,24 @@
 
 - name: "Get Consul token"
   block:
-  -  ansible.builtin.include_tasks: helper/access_tokens/get_consul_token.yml
-  - assert:
+  - name: "Get Consul token"
+    ansible.builtin.include_tasks: helper/access_tokens/get_consul_token.yml
+
+  - name: "Assert Consul token is defined"
+    ansible.builtin.assert:
       that:
       - (consul_token is defined) and (consul_token|length > 0)
+
 - name: "Get Vault token"
   block:
-  - ansible.builtin.include_tasks: helper/access_tokens/get_vault_token.yml
-  - assert:
+  - name: "Get Vault token"
+    ansible.builtin.include_tasks: helper/access_tokens/get_vault_token.yml
+
+  - name: "Assert Vault token is defined"
+    ansible.builtin.assert:
       that:
         - (vault_token is defined) and (vault_token|length > 0)
+
   - name: Set vault lookup base info var
     ansible.builtin.set_fact:
       vault_lookup_base_info: "url={{ vault_url }} auth_method=token token={{ vault_token }}"
@@ -45,19 +53,23 @@
       url: "{{ consul_url }}/v1/catalog/service/{{ service_name }}"
       method: GET
       status_code: 200, 404
-      validate_certs: no
+      validate_certs: false
       headers:
         Authorization: "Bearer {{ consul_token }}"
     register: output_consul_service
     no_log: false
+
   - name: "Print received consul services"
     ansible.builtin.debug:
       var: output_consul_service.json
+
   - name: Fail because no service found
     when: output_consul_service.json | length == 0
-    fail:
+    ansible.builtin.fail:
       msg: "No service with service name '{{ service_name }}' found"
-  - set_fact:
+
+  - name: "Set capability service facts"
+    ansible.builtin.set_fact:
       resource_id:  "{{ output_consul_service.json[0].NodeMeta.resourceId }}"
       capability_service_id: "{{ output_consul_service.json[0].ServiceID }}"
       consul_service_meta: "{{ output_consul_service.json[0].ServiceMeta | default({}) }}"
@@ -67,22 +79,24 @@
   - name: "Set Vault lookup path of capability service"
     ansible.builtin.set_fact:
       vault_lookup_path: "url={{ vault_url }} token={{ vault_token }} secret=resources/data/{{ resource_id }}/capabilities/{{ capability_service_id }}"
-  - ansible.builtin.set_fact:
       vault_service_secrets: "{}"
+
   - name: "Extract Vault service secrets of capability service"
     ansible.builtin.set_fact:
       vault_service_secrets: "{{ lookup('community.hashi_vault.hashi_vault', vault_lookup_path) | default({}) }}"
-    ignore_errors: yes
+    ignore_errors: true
 
 - name: "Process Consul Service information"
   ansible.builtin.include_tasks: actions/process_consul_service_info.yml
   loop: "{{ output_consul_service.json }}"
   when: output_consul_service.json | length >= 1 and item.Address != 'kubernetes-cluster'
 
-- block:
+- name: "Show all inventory groups and clear variable 'ansible_inventory'"
+  block:
   - name: "Show all inventory groups"
-    debug:
+    ansible.builtin.debug:
       var: groups
+
   - name: "Clear variable 'ansible_inventory', to prevent variable propagation"
     ansible.builtin.set_fact:
       ansible_inventory: {}
