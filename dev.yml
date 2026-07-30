@@ -1,9 +1,12 @@
-- hosts: localhost
+---
+- name: "Inventory Helper"
+  hosts: localhost
   tasks:
-  - include_role:
-      name: inventory_helper
-      tasks_from: main
-    vars:
-      service_name: "{{ lookup('env', 'SERVICE_NAME') }}"
-      supported_connection_types: "{{ lookup('env', 'SUPPORTED_CONNECTION_TYPES') }}"
-      keycloak_token: "{{ lookup('env', 'KEYCLOAK_TOKEN') }}"
+    - name: "Include inventory_helper role"
+      ansible.builtin.include_role:
+        name: inventory_helper
+        tasks_from: main
+      vars:
+        service_name: "{{ lookup('env', 'SERVICE_NAME') }}"
+        supported_connection_types: "{{ lookup('env', 'SUPPORTED_CONNECTION_TYPES') }}"
+        keycloak_token: "{{ lookup('env', 'KEYCLOAK_TOKEN') }}"
