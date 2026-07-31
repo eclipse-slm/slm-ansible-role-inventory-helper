@@ -3,8 +3,25 @@
     key: "{{ item.Key | split('/') | last }}"
 
 - name: Get Value
-  ansible.builtin.set_fact:
-    value: "{{ item.Value | b64decode | from_json }}"
+  when:
+    - item.Value is defined
+    - item.Value | length > 0
+  block:
+    - name: Get Value (json)
+      ansible.builtin.set_fact:
+        value: "{{ item.Value | b64decode | from_json }}"
+      ignore_errors: true
 
-- ansible.builtin.set_fact:
+    - name: Get Value (yaml)
+      ansible.builtin.set_fact:
+        value: "{{ item.Value | b64decode | from_yaml }}"
+      ignore_errors: true
+
+- name: Fail if value is not defined
+  ansible.builtin.fail:
+    msg: "Value of key {{ key }} is not defined in json/yaml format or empty"
+  when: value is not defined
+
+- name: Set service_kv fact
+  ansible.builtin.set_fact:
     service_kv: "{{ service_kv | default({}) | combine({ key: value }) }}"
