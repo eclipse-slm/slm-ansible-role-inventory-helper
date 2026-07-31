@@ -4,6 +4,7 @@
     consul_url: "{{ lookup('env', 'CONSUL_URL') }}"
     vault_url: "{{ lookup('env', 'VAULT_URL') }}"
 
+### Inputs:
 - name: "Assert required input variables are defined"
   ansible.builtin.assert:
     that:
@@ -13,6 +14,16 @@
       - (consul_url is defined) and (consul_url|length > 0)                                   # Consul URL
       - (vault_url is defined) and (vault_url|length > 0)                                     # Vault URL
 
+### Optional Inputs:
+# - consul_token
+# - vault_token
+
+- name: "Install required pip packages"
+  ansible.builtin.pip:
+    name: hvac
+    break_system_packages: true
+  delegate_to: localhost
+
 - name: "Get remote and non-remote connection types out of supported connection types"
   ansible.builtin.set_fact:
     supported_connection_types_without_remote: "{{ supported_connection_types | difference(remote_access_connection_types) }}"
@@ -21,6 +32,7 @@
 - name: "Get Consul token"
   block:
   - name: "Get Consul token"
+    when: (consul_token is not defined) or (consul_token|length == 0)
     ansible.builtin.include_tasks: helper/access_tokens/get_consul_token.yml
 
   - name: "Assert Consul token is defined"
@@ -31,6 +43,7 @@
 - name: "Get Vault token"
   block:
   - name: "Get Vault token"
+    when: (vault_token is not defined) or (vault_token|length == 0)
     ansible.builtin.include_tasks: helper/access_tokens/get_vault_token.yml
 
   - name: "Assert Vault token is defined"
@@ -41,10 +54,6 @@
   - name: Set vault lookup base info var
     ansible.builtin.set_fact:
       vault_lookup_base_info: "url={{ vault_url }} auth_method=token token={{ vault_token }}"
-
-- name: "Install required pip packages"
-  ansible.builtin.pip:
-    name: hvac
 
 - name: "Get information about capability service from Consul"
   block:
@@ -85,6 +94,8 @@
     ansible.builtin.set_fact:
       vault_service_secrets: "{{ lookup('community.hashi_vault.hashi_vault', vault_lookup_path) | default({}) }}"
     ignore_errors: true
+
+- debug:
 
 - name: "Process Consul Service information"
   ansible.builtin.include_tasks: actions/process_consul_service_info.yml
