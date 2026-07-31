@@ -1,0 +1,46 @@
+---
+# Purpose: bring the instance to the desired state by running the role under test.
+# Molecule calls this playbook with `molecule converge`.
+- name: Converge & Verify
+  hosts: slm
+  gather_facts: false # Disable if your role does not rely on facts
+  become: true
+  roles:
+    - eclipse.slm.env
+  vars_files:
+    - defaults/main.yml
+  pre_tasks:
+    - name: Apply vault/consul role for getting access tokens
+      ansible.builtin.include_role:
+        name: "{{ item.name }}"
+        tasks_from: "{{ item.tasks | default(omit) }}"
+      loop:
+        - name: eclipse.slm.env
+        - name: eclipse.slm.vault
+          tasks: get_root_token
+        - name: eclipse.slm.consul
+          tasks: get_master_token
+        - name: eclipse-slm.keycloak_client
+          tasks: authentication/get_admin_access_token.yml
+
+    # TODO: Make keycloak_acces_token usable for the role under test
+    - name: Set converge facts
+      ansible.builtin.set_fact:
+        keycloak_token: "{{ keycloak_access_token }}"
+        service_name: "ssh"
+        supported_connection_types: ["ssh"]
+        consul_token: "{{ consul_master_token }}"
+        vault_token: "{{ vault_root_token }}"
+  tasks:
+    - name: Converge - Apply role under test
+      ansible.builtin.include_role:
+        name: ../../../inventory_helper
+
+    - name: Verify - Assert groups and hosts in groups variable
+      ansible.builtin.assert:
+        that:
+          - groups['ssh'] is defined
+          - groups['ssh'] | length > 0
+          - groups['ssh'][0] == resource_address
+        fail_msg: "The 'ssh' group is not defined or does not contain the expected host."
+        success_msg: "The 'ssh' group is defined and contains the expected host."

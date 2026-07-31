@@ -1,0 +1,62 @@
+- name: Prepare
+  hosts: slm
+  gather_facts: true
+  become: true
+  no_log: "{{ molecule_no_log }}"
+  roles:
+    - fabos.slm-ansible-role-docker
+  vars_files:
+    - defaults/main.yml
+  tasks:
+    - name: Apply roles
+      when: item.when | default(true)
+      ansible.builtin.include_role:
+        name: "{{ item.role }}"
+        tasks_from: "{{ item.tasks_from | default('main') }}"
+      vars:
+        _consul_token: "{{ ENV.CONSUL.MASTER_TOKEN }}"
+        _store_compose_dir: "/install/deployment"
+        _vault_root_token: "{{ vault_root_token }}"
+        _vault_token: "{{ vault_root_token }}"
+        _resource_id: "{{ resource_id }}"
+        _resource_name: "{{ resource_name }}"
+        _resource_address: "{{ resource_address }}"
+        _resource_username: "username"
+        _resource_password: "password"
+        _resource_remote_access_service_id: "{{ resource_remote_access_service_id }}"
+        _vault_credential_id: "{{ vault_kv_credential_id }}"
+      loop:
+        - role: eclipse.slm.env
+        - role: eclipse.slm.env
+          tasks_from: write_hosts
+        - role: eclipse.slm.vault
+        - role: eclipse.slm.consul
+          tasks_from: start
+        - role: eclipse.slm.traefik
+        - role: eclipse.slm.keycloak
+        - role: "eclipse.slm.vault"
+          tasks_from: "init_after_keycloak.yml"
+        - role: "eclipse.slm.consul"
+        - role: "eclipse-slm.vault_client"
+          tasks_from: "slm/write_resource_credential"
+        - role: "eclipse-slm.consul_client"
+          tasks_from: "slm/register_resource"
+
+    - name: Put internal hostnames into /etc/hosts
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        line: "{{ item }}"
+        regexp: "{{ item | split(' ') | last }}"
+      loop:
+        - "{{ansible_host}} vault"
+        - "{{ansible_host}} consul"
+      delegate_to: localhost
+
+    - name: Print Endpoints and access tokens
+      ansible.builtin.debug:
+        var: item
+      loop:
+        - endpoint: "http://{{ansible_host}}:8500"
+          token: "{{ ENV.CONSUL.MASTER_TOKEN }}"
+        - endpoint: "http://{{ansible_host}}:8200"
+          token: "{{ vault_root_token }}"
