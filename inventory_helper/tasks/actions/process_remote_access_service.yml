@@ -25,7 +25,7 @@
 
 - name: Get Credentials linked to remote access service
   ansible.builtin.set_fact:
-    vault_secret: "{{ lookup('hashi_vault', '{{ vault_lookup_base_info }} secret={{ vault_kv_path }}', as='raw') }}"
+    vault_secret: "{{ lookup('hashi_vault', vault_lookup_base_info +' secret=' + vault_kv_path, as='raw') }}"
 
 - set_fact:
     credentialDataType: "{{ vault_secret.data.metadata.custom_metadata.credentialDataType }}"
