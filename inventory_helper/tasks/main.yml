@@ -4,11 +4,17 @@
     consul_url: "{{ lookup('env', 'CONSUL_URL') }}"
     vault_url: "{{ lookup('env', 'VAULT_URL') }}"
 
+- name: Set fact for consul/vault token is defined
+  ansible.builtin.set_fact:
+    consul_token_defined: "{{ (consul_token is defined) and (consul_token | length > 0) }}"
+    vault_token_defined: "{{ (vault_token is defined) and (vault_token | length > 0) }}"
+    keycloak_token_defined: "{{ (keycloak_token is defined) and (keycloak_token | length > 0) }}"
+
 ### Inputs:
 - name: "Assert required input variables are defined"
   ansible.builtin.assert:
     that:
-      - (keycloak_token is defined) and (keycloak_token|length > 0)                           # Keycloak token used to get Consul and Vault tokens
+      - keycloak_token_defined or (consul_token_defined and vault_token_defined)  # Keycloak token used to get Consul and Vault tokens
       - (service_name is defined) and (service_name|length > 0)                               # Service name of the capability service in Consul
       - (supported_connection_types is defined) and (supported_connection_types|length > 0)   # Supported connection types of the capability
       - (consul_url is defined) and (consul_url|length > 0)                                   # Consul URL
@@ -32,18 +38,18 @@
 - name: "Get Consul token"
   block:
   - name: "Get Consul token"
-    when: (consul_token is not defined) or (consul_token|length == 0)
+    when: not consul_token_defined
     ansible.builtin.include_tasks: helper/access_tokens/get_consul_token.yml
 
   - name: "Assert Consul token is defined"
     ansible.builtin.assert:
       that:
-      - (consul_token is defined) and (consul_token|length > 0)
+        - (consul_token is defined) and (consul_token|length > 0)
 
 - name: "Get Vault token"
   block:
   - name: "Get Vault token"
-    when: (vault_token is not defined) or (vault_token|length == 0)
+    when: not vault_token_defined
     ansible.builtin.include_tasks: helper/access_tokens/get_vault_token.yml
 
   - name: "Assert Vault token is defined"
