@@ -85,7 +85,7 @@
 
   - name: "Set capability service facts"
     ansible.builtin.set_fact:
-      resource_id:  "{{ output_consul_service.json[0].NodeMeta.resourceId }}"
+      resource_id: "{{ output_consul_service.json[0].NodeMeta.resourceId }}"
       capability_service_id: "{{ output_consul_service.json[0].ServiceID }}"
       consul_service_meta: "{{ output_consul_service.json[0].ServiceMeta | default({}) }}"
 
@@ -100,8 +100,6 @@
     ansible.builtin.set_fact:
       vault_service_secrets: "{{ lookup('community.hashi_vault.hashi_vault', vault_lookup_path) | default({}) }}"
     ignore_errors: true
-
-- debug:
 
 - name: "Process Consul Service information"
   ansible.builtin.include_tasks: actions/process_consul_service_info.yml
