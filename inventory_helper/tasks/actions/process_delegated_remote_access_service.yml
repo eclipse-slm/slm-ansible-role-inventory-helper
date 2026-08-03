@@ -53,7 +53,8 @@
       vars:
         service_id: "{{ remote_access_service.ServiceID }}"
 
-    - set_fact:
+    - name: "Set CredentialId and ConnectionType"
+      ansible.builtin.set_fact:
         credentialId: "{{ remote_access_service.ServiceMeta.credentialId }}"
         connection_type: "{{ remote_access_service.ServiceMeta.connectionType }}"
 
@@ -61,20 +62,23 @@
       ansible.builtin.set_fact:
         vault_kv_path: "credentials/data/{{ credentialId }}"
 
-    - name: Get Credentials linked to remote access service
+    - name: "Get Credentials linked to remote access service at '{{ vault_kv_path }}' in Vault ({{ vault_url }})"
       ansible.builtin.set_fact:
         vault_secret: "{{ lookup('hashi_vault', vault_lookup_base_info +' secret=' + vault_kv_path, as='raw') }}"
 
-    - set_fact:
+    - name: Set credentialDataType fact
+      ansible.builtin.set_fact:
         credentialDataType: "{{ vault_secret.data.metadata.custom_metadata.credentialDataType }}"
 
-    - set_fact:
+    - name: Set username and password facts for USERNAME_PASSWORD credential type
+      ansible.builtin.set_fact:
         username: "{{ vault_secret.data.data.username }}"
         password: "{{ vault_secret.data.data.password }}"
       when: credentialDataType == "USERNAME_PASSWORD"
       no_log: true
 
-    - set_fact:
+    - name: Set username and private key facts for KEY_PAIR credential type
+      ansible.builtin.set_fact:
         username: "{{ remote_access_service.ServiceMeta.username }}"
         privateKey: "{{ vault_secret.data.data.privateKey }}"
         publicKey: "{{ vault_secret.data.data.publicKey }}"
