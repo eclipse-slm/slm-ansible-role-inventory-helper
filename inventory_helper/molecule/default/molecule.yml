@@ -20,6 +20,16 @@ platforms:
     # Openstack
     image_name: Ubuntu 24.04 64-bit
     flavor: m1.large
+  - name: slm-ansible-role-inventory-helper-test-host
+    groups:
+      - test-host
+    # Kubevirt
+    image: quay.io/containerdisks/ubuntu:24.04
+    volume_size: 20Gi
+    instancetype: u1.large
+    # Openstack
+    image_name: Ubuntu 24.04 64-bit
+    flavor: m1.large
 
 
 ansible:

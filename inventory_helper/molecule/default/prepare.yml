@@ -7,6 +7,10 @@
     - fabos.slm-ansible-role-docker
   vars_files:
     - defaults/main.yml
+  pre_tasks:
+    - name: Set resource_address fact
+      ansible.builtin.set_fact:
+        resource_address: "{{ hostvars[groups['test-host'][0]].ansible_host }}"
   tasks:
     - name: Apply roles
       when: item.when | default(true)
@@ -21,8 +25,8 @@
         _resource_id: "{{ resource_id }}"
         _resource_name: "{{ resource_name }}"
         _resource_address: "{{ resource_address }}"
-        _resource_username: "username"
-        _resource_password: "password"
+        _resource_username: "{{ resource_username }}"
+        _resource_password: "{{ resource_password }}"
         _resource_remote_access_service_id: "{{ resource_remote_access_service_id }}"
         _vault_credential_id: "{{ vault_kv_credential_id }}"
       loop:

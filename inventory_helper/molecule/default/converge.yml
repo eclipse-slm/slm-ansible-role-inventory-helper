@@ -10,6 +10,10 @@
   vars_files:
     - defaults/main.yml
   pre_tasks:
+    - name: Set resource_address fact
+      ansible.builtin.set_fact:
+        resource_address: "{{ hostvars[groups['test-host'][0]].ansible_host }}"
+
     - name: Apply vault/consul role for getting access tokens
       ansible.builtin.include_role:
         name: "{{ item.name }}"
@@ -22,6 +26,19 @@
           tasks: get_master_token
         - name: eclipse-slm.keycloak_client
           tasks: authentication/get_admin_access_token.yml
+
+    - name: Write consul/vault hostname to /etc/hosts (to make lookups work in the role under test)
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        line: "{{ item.ip }} {{ item.hostname }}"
+        regexp: "{{ item.hostname }}$"
+        state: present
+      loop:
+        - hostname: consul
+          ip: "{{ hostvars[groups['slm'][0]].ansible_host }}"
+        - hostname: vault
+          ip: "{{ hostvars[groups['slm'][0]].ansible_host }}"
+      delegate_to: localhost
 
     # TODO: Make keycloak_acces_token usable for the role under test
     - name: Set converge facts
@@ -40,7 +57,61 @@
       ansible.builtin.assert:
         that:
           - groups['ssh'] is defined
-          - groups['ssh'] | length > 0
-          - groups['ssh'][0] == resource_address
+          - groups['ssh'] | length == 1
+          - resource_address in groups['ssh']
         fail_msg: "The 'ssh' group is not defined or does not contain the expected host."
         success_msg: "The 'ssh' group is defined and contains the expected host."
+
+    - name: Store hostvars in fact for later verification
+      ansible.builtin.set_fact:
+        host_facts: "{{ hostvars[groups['ssh'][0]] }}"
+
+    - name: Verify - Assert ansible connection facts
+      ansible.builtin.assert:
+        that: host_facts[item.fact_key] == item.expected
+        fail_msg: >
+          "The ansible connection fact '{{ item.fact_key }}' does not match
+          the expected value '{{ item.expected }}'. Actual value:
+          '{{ host_facts[item.fact_key] }}'"
+        success_msg: "The ansible connection fact '{{ item.fact_key }}' matches the expected value '{{ item.expected }}'."
+      loop:
+        - fact_key: "ansible_connection"
+          expected: "ssh"
+        - fact_key: "ansible_port"
+          expected: 22
+        - fact_key: "ansible_shell_type"
+          expected: "sh"
+        - fact_key: "ansible_python_interpreter"
+          expected: "/usr/bin/python3"
+        - fact_key: "ansible_user"
+          expected: "{{ resource_username }}"
+        - fact_key: "ansible_password"
+          expected: "{{ resource_password }}"
+        - fact_key: "ansible_become_user"
+          expected: ""
+        - fact_key: "ansible_become_pass"
+          expected: "{{ resource_password }}"
+        - fact_key: "ansible_become_method"
+          expected: "sudo"
+
+- name: Verify - Connect to added host
+  hosts: ssh
+  gather_facts: true
+  become: true
+  tasks:
+    - name: Create Test file
+      ansible.builtin.file:
+        path: /tmp/test_file.txt
+        state: touch
+
+    - name: Stat Test file
+      ansible.builtin.stat:
+        path: /tmp/test_file.txt
+      register: stat_result
+
+    - name: Assert Test file exists
+      ansible.builtin.assert:
+        that:
+          - stat_result.stat.exists
+        fail_msg: "The test file does not exist."
+        success_msg: "The test file exists."
