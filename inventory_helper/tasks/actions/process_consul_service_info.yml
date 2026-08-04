@@ -1,13 +1,16 @@
-- ansible.builtin.set_fact:
+---
+- name: "Set service fact"
+  ansible.builtin.set_fact:
     service: "{{ item }}"
 
-- debug:
+- name: "Debug message for processing service"
+  ansible.builtin.debug:
     msg: "Processing service {{ service.ServiceName }}"
 
 - name: "Process Remote Access Service"
   ansible.builtin.include_tasks: actions/process_remote_access_service.yml
   when:
-    -  supported_connection_types_only_remote | length > 0
+    - supported_connection_types_only_remote | length > 0
     - '"Process Remote Access Service" in service.ServiceTags'
 
 - name: Process None-Remote Access Service
@@ -18,16 +21,16 @@
         - supported_connection_types_without_remote | length > 0
         - service.ServiceMeta.connectionType != 'null'
         - service.ServiceMeta.connectionType in supported_connection_types_without_remote
-      include_tasks: process_non_remote_access_service.yml
+      ansible.builtin.include_tasks: process_non_remote_access_service.yml
 
     - name: Delegate to Remote Acccess Service of node
       when:
         - (supported_connection_types_without_remote | length == 0) or (service.ServiceMeta.connectionType == 'null') or (not service.ServiceMeta.connectionType in supported_connection_types_without_remote)
         - supported_connection_types_only_remote | length > 0
-      include_tasks: process_delegated_remote_access_service.yml
+      ansible.builtin.include_tasks: process_delegated_remote_access_service.yml
 
 - name: Build groups list for host
-  set_fact:
+  ansible.builtin.set_fact:
     host_groups: "{{ (extra_groups | default([])) + ansible_inventory.groups }}"
 
 - name: Add Item to ansible Inventory

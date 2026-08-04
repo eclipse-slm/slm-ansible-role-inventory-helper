@@ -1,3 +1,4 @@
+---
 - name: Assert input parameter
   ansible.builtin.assert:
     that:
@@ -17,16 +18,18 @@
     url: "{{ consul_url }}/v1/catalog/node-services/{{ service.Node }}?filter={{ filter_exp | urlencode() }}"
     method: GET
     status_code: 200, 404
-    validate_certs: no
+    validate_certs: false
     headers:
       Authorization: "Bearer {{ consul_token }}"
   register: output_get_remote_access_service
   no_log: false
 
-- set_fact:
+- name: Set services fact
+  ansible.builtin.set_fact:
     services: "{{ output_get_remote_access_service.json.Services }}"
 
-- debug:
+- name: Debug message if no remote access service found
+  ansible.builtin.debug:
     msg: "Node with id='{{ service.ID }}' has no remote access service"
   when: services | length == 0
 
@@ -38,7 +41,7 @@
         url: "{{ consul_url }}/v1/catalog/service/{{ services[0].Service }}"
         method: GET
         status_code: 200, 404
-        validate_certs: no
+        validate_certs: false
         headers:
           Authorization: "Bearer {{ consul_token }}"
       register: output_connection_service
