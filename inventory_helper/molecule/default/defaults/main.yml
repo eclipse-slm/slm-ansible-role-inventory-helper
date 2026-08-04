@@ -2,6 +2,7 @@
 vault_resources_secret_engine: "resources"
 consul_datacenter: "fabos"
 resource_id: b0a21dfe-b111-4d52-8b31-6d0744490e8a
-resource_name: "test-host"
-resource_address: 1.2.3.4
+resource_name: "slm-ansible-role-inventory-helper-test-host"
 resource_remote_access_service_id: 5d32e5e2-0b08-4a21-9af8-f502cadccedf
+resource_username: molecule
+resource_password: password
