@@ -75,6 +75,8 @@
           '{{ host_facts[item.fact_key] }}'"
         success_msg: "The ansible connection fact '{{ item.fact_key }}' matches the expected value '{{ item.expected }}'."
       loop:
+        - fact_key: "resource_id"
+          expected: "{{ resource_id }}"
         - fact_key: "ansible_connection"
           expected: "ssh"
         - fact_key: "ansible_port"
@@ -102,6 +104,7 @@
     - name: Create Test file
       ansible.builtin.file:
         path: /tmp/test_file.txt
+        mode: '0644'
         state: touch
 
     - name: Stat Test file
