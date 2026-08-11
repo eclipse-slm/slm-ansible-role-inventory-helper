@@ -20,6 +20,7 @@
       ansible.builtin.set_fact:
         ansible_inventory:
           # GENERAL
+          resource_id: "{{ resource_id  }}"
           name: "{{ service.Address }}"
           groups: "{{ service.ServiceTags + (nonRemoteConnectionType | default([]) ) }}"
           ansible_connection: "local"

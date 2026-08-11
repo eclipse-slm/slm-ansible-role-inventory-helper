@@ -36,6 +36,7 @@
 - name: Add Item to ansible Inventory
   ansible.builtin.add_host:
     # GENERAL
+    resource_id:                "{{ resource_id }}"
     name:                       "{{ ansible_inventory.name }}"
     groups:                     "{{ host_groups }}"
     ansible_connection:         "{{ ansible_inventory.ansible_connection }}"

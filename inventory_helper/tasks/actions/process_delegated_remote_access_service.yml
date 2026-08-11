@@ -94,6 +94,7 @@
       ansible.builtin.set_fact:
         ansible_inventory:
           # GENERAL
+          resource_id: "{{ resource_id  }}"
           name: "{{ remote_access_service.Address }}"
           groups: "{{ (ansible_inventory.groups | default([])) + remote_access_service.ServiceTags + [connection_type] }}"
           ansible_connection: "ssh"

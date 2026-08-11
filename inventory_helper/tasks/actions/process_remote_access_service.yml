@@ -53,6 +53,7 @@
   ansible.builtin.set_fact:
     ansible_inventory:
       # GENERAL
+      resource_id: "{{ resource_id  }}"
       name: "{{ service.Address }}"
       groups: "{{ (ansible_inventory.groups | default([])) + service.ServiceTags + [connection_type] }}"
       ansible_connection: "ssh"
